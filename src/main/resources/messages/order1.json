@@ -1,0 +1,5 @@
+{
+    "id": "ORDER-1",
+    "customerId": "43",
+    "products": ["PRODUCT-1", "PRODUCT-2"]
+}
