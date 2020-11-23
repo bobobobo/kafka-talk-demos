@@ -17,4 +17,9 @@ public interface EnrichedOrder {
 
     @SerializedName("products")
     public abstract List<Product> getProduct();
+
+    @SerializedName("status")
+    @Value.Default default OrderStatus getStatus() {
+        return OrderStatus.CREATED;
+    }
 }

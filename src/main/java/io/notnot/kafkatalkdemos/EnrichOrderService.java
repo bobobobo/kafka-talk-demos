@@ -1,5 +1,6 @@
 package io.notnot.kafkatalkdemos;
 
+import com.google.gson.internal.Streams;
 import io.notnot.kafkatalkdemos.domain.*;
 import io.notnot.kafkatalkdemos.serialization.GsonSerde;
 import org.apache.kafka.clients.CommonClientConfigs;
@@ -27,6 +28,7 @@ public class EnrichOrderService {
     private static final String CUSTOMER_TOPIC = "demo-customer";
     private static final String PRODUCT_TOPIC = "demo-product";
     private static final String PRODUCT_STORE = "product-store";
+    private static final String ORDER_STATUS_TOPIC = "demo-order-status";
 
     public static void main(String[] args) {
         final StreamsBuilder builder = new StreamsBuilder();
@@ -42,11 +44,23 @@ public class EnrichOrderService {
                         .withKeySerde(Serdes.String())
                         .withValueSerde(GsonSerde.get(Product.class)));
 
+        final KTable<String, OrderStatus> orderStatus = builder.table(ORDER_STATUS_TOPIC, Consumed.with(Serdes.String(), Serdes.String()))
+                .mapValues(s -> OrderStatus.valueOf(s))
+                .filter((k, v) -> v != null);
+
         builder.stream(NEW_ORDER_TOPIC, Consumed.with(Serdes.String(), GsonSerde.get(Order.class)))
                 .join(customers,
                         (orderId, order) -> order.getCustomerId(),
                         (order, customer) -> new OrderAndCustomer(order, customer))
                 .transform(() -> new EnrichProductsTransformer())
+                .toTable(Materialized.with(Serdes.String(), GsonSerde.get(EnrichedOrder.class)))
+                .leftJoin(orderStatus, (order, status) -> {
+                    if (status == null) {
+                        return order;
+                    }
+                    return ImmutableEnrichedOrder.copyOf(order).withStatus(status);
+                })
+                .toStream()
                 .to(ENRICHED_ORDER_TOPIC, Produced.with(Serdes.String(), GsonSerde.get(EnrichedOrder.class)));
 
         final Topology topology = builder.build();
@@ -54,7 +68,6 @@ public class EnrichOrderService {
         final KafkaStreams streams = new KafkaStreams(topology, getKafkaConfiguration());
         final CountDownLatch latch = new CountDownLatch(1);
 
-        // attach shutdown handler to catch control-c
         Runtime.getRuntime().addShutdownHook(new Thread("streams-shutdown-hook") {
             @Override
             public void run() {
@@ -70,16 +83,6 @@ public class EnrichOrderService {
             System.exit(1);
         }
         System.exit(0);
-    }
-
-    public static Properties getKafkaConfiguration() {
-        Properties config = new Properties();
-        config.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_SERVERS);
-        config.put(StreamsConfig.APPLICATION_ID_CONFIG, APPLICATION_ID);
-        config.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
-        config.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
-
-        return config;
     }
 
     public static class OrderAndCustomer {
@@ -123,8 +126,18 @@ public class EnrichOrderService {
 
         @Override
         public void close() {
-
         }
     }
+    
+    public static Properties getKafkaConfiguration() {
+        Properties config = new Properties();
+        config.put(CommonClientConfigs.BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_SERVERS);
+        config.put(StreamsConfig.APPLICATION_ID_CONFIG, APPLICATION_ID);
+        config.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
+        config.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
+        config.put(StreamsConfig.CACHE_MAX_BYTES_BUFFERING_CONFIG, 0);
+        return config;
+    }
+
 
 }

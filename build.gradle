@@ -21,3 +21,28 @@ dependencies {
     compile group: 'com.google.code.gson', name: 'gson', version: '2.8.6'
     compile group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.30'
 }
+
+task(crmCustomerService, dependsOn: 'classes', type: JavaExec) {
+   main = 'io.notnot.kafkatalkdemos.CrmCustomerService'
+   classpath = sourceSets.main.runtimeClasspath
+}
+task(newOrderService, dependsOn: 'classes', type: JavaExec) {
+   main = 'io.notnot.kafkatalkdemos.NewOrderService'
+   classpath = sourceSets.main.runtimeClasspath
+}
+task(customerOrderCountService, dependsOn: 'classes', type: JavaExec) {
+   main = 'io.notnot.kafkatalkdemos.CustomerOrderCountService'
+   classpath = sourceSets.main.runtimeClasspath
+}
+task(enrichOrderService, dependsOn: 'classes', type: JavaExec) {
+   main = 'io.notnot.kafkatalkdemos.EnrichOrderService'
+   classpath = sourceSets.main.runtimeClasspath
+}
+task(orderLookupService, dependsOn: 'classes', type: JavaExec) {
+   main = 'io.notnot.kafkatalkdemos.OrderLookupService'
+   classpath = sourceSets.main.runtimeClasspath
+}
+task(orderStatusService, dependsOn: 'classes', type: JavaExec) {
+    main = 'io.notnot.kafkatalkdemos.OrderStatusService'
+    classpath = sourceSets.main.runtimeClasspath
+}
