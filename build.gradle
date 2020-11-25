@@ -38,8 +38,8 @@ task(enrichOrderService, dependsOn: 'classes', type: JavaExec) {
    main = 'io.notnot.kafkatalkdemos.EnrichOrderService'
    classpath = sourceSets.main.runtimeClasspath
 }
-task(orderLookupService, dependsOn: 'classes', type: JavaExec) {
-   main = 'io.notnot.kafkatalkdemos.OrderLookupService'
+task(entityLookupService, dependsOn: 'classes', type: JavaExec) {
+   main = 'io.notnot.kafkatalkdemos.EntityLookupService'
    classpath = sourceSets.main.runtimeClasspath
 }
 task(orderStatusService, dependsOn: 'classes', type: JavaExec) {

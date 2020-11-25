@@ -13,6 +13,9 @@ import spark.Spark;
 import java.util.Properties;
 import java.util.concurrent.Future;
 
+import static spark.Spark.before;
+import static spark.Spark.options;
+
 public class NewOrderService {
     private static final int HTTP_PORT = 8080;
     private static final String BOOTSTRAP_SERVERS = "localhost:9092";
@@ -20,7 +23,7 @@ public class NewOrderService {
 
     public static void main(String[] args) {
         Spark.port(HTTP_PORT);
-
+        enableCORS();
         KafkaProducer<String, Order> orderProducer = new KafkaProducer<>(
                 getKafkaConfiguration(), new StringSerializer(), new GsonSerializer<>());
 
@@ -29,6 +32,21 @@ public class NewOrderService {
             Future<RecordMetadata> result = orderProducer.send(new ProducerRecord<>(NEW_ORDER_TOPIC, order.getId(), order));
 
             return String.valueOf(result.get().offset());
+        });
+    }
+
+    private static void enableCORS() {
+
+        options("/*", (request, response) ->
+        {
+            return "OK";
+        });
+
+        before((request, response) ->
+        {
+            response.header("Access-Control-Allow-Origin", "*");
+            response.header("Access-Control-Allow-Methods", "*");
+            response.header("Access-Control-Allow-Headers", "*");
         });
     }
 

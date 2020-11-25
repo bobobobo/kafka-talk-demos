@@ -5,11 +5,11 @@ $KAFKA_HOME/bin/kafka-configs.sh --zookeeper localhost:2181 --entity-type topics
 $KAFKA_HOME/bin/kafka-configs.sh --zookeeper localhost:2181 --entity-type topics --alter --entity-name demo-new-order --add-config retention.ms=1000
 $KAFKA_HOME/bin/kafka-configs.sh --zookeeper localhost:2181 --entity-type topics --alter --entity-name demo-customer-order-count --add-config retention.ms=1000
 $KAFKA_HOME/bin/kafka-configs.sh --zookeeper localhost:2181 --entity-type topics --alter --entity-name demo-order-status --add-config retention.ms=1000
-sleep 30
+sleep 60
 $KAFKA_HOME/bin/kafka-streams-application-reset.sh --application-id crm-customer-service --input-topics demo-crm-customer --bootstrap-servers localhost:9092 --zookeeper localhost:2181
 $KAFKA_HOME/bin/kafka-streams-application-reset.sh --application-id customer-order-count-service --input-topics demo-new-order --bootstrap-servers localhost:9092 --zookeeper localhost:2181
 $KAFKA_HOME/bin/kafka-streams-application-reset.sh --application-id enrich-order-service --input-topics demo-new-order,demo-customer,demo-product --bootstrap-servers localhost:9092 --zookeeper localhost:2181
-$KAFKA_HOME/bin/kafka-streams-application-reset.sh --application-id order-service --input-topics demo-enriched-order --bootstrap-servers localhost:9092 --zookeeper localhost:2181
+$KAFKA_HOME/bin/kafka-streams-application-reset.sh --application-id entity-lookup-service --input-topics demo-customer,demo-product,demo-customer-order-count,demo-enriched-order --bootstrap-servers localhost:9092 --zookeeper localhost:2181
 rm -rf /tmp/kafka-streams/*
 $KAFKA_HOME/bin/kafka-configs.sh --zookeeper localhost:2181 --entity-type topics --alter --entity-name demo-customer --delete-config retention.ms
 $KAFKA_HOME/bin/kafka-configs.sh --zookeeper localhost:2181 --entity-type topics --alter --entity-name demo-enriched-order --delete-config retention.ms

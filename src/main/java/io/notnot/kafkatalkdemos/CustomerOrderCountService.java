@@ -1,13 +1,13 @@
 package io.notnot.kafkatalkdemos;
 
+import io.notnot.kafkatalkdemos.domain.ImmutableOrder;
+import io.notnot.kafkatalkdemos.domain.ImmutableOrderCount;
 import io.notnot.kafkatalkdemos.domain.Order;
+import io.notnot.kafkatalkdemos.domain.OrderCount;
 import io.notnot.kafkatalkdemos.serialization.GsonSerde;
 import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.common.serialization.Serdes;
-import org.apache.kafka.streams.KafkaStreams;
-import org.apache.kafka.streams.StreamsBuilder;
-import org.apache.kafka.streams.StreamsConfig;
-import org.apache.kafka.streams.Topology;
+import org.apache.kafka.streams.*;
 import org.apache.kafka.streams.kstream.Consumed;
 import org.apache.kafka.streams.kstream.Produced;
 
@@ -28,8 +28,8 @@ public class CustomerOrderCountService {
                 .groupBy((orderId, order) -> order.getCustomerId())
                 .count()
                 .toStream()
-                .mapValues(String::valueOf)
-                .to(CUSTOMER_ORDER_COUNT_TOPIC, Produced.with(Serdes.String(), Serdes.String()));
+                .map((key, value) -> KeyValue.pair(key, (OrderCount)ImmutableOrderCount.builder().customerId(key).count(value).build()))
+                .to(CUSTOMER_ORDER_COUNT_TOPIC, Produced.with(Serdes.String(), GsonSerde.get(OrderCount.class)));
 
         final Topology topology = builder.build();
 
